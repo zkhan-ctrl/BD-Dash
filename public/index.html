@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>BD Dashboard</title>
+<link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div id="picker" class="picker-screen">
+  <div class="picker-card">
+    <h1>BD Dashboard</h1>
+    <p class="muted">Select your name to view your accounts and proposals.</p>
+    <select id="bdmSelect"><option value="">Loading BDMs…</option></select>
+    <button id="goBtn" disabled>View My Dashboard</button>
+  </div>
+</div>
+
+<div id="dashboard" class="dashboard-screen hidden">
+  <header class="topbar">
+    <div>
+      <h1 id="bdmName">—</h1>
+      <span class="muted">Bullhorn CRM · BD Dashboard</span>
+    </div>
+    <a href="/" class="link">Switch BDM</a>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="accounts">My Accounts (A–Z)</button>
+    <button class="tab-btn" data-tab="proposals">Proposals Sent</button>
+  </nav>
+
+  <section id="tab-accounts" class="tab-panel">
+    <div class="search-row">
+      <input id="accountSearch" type="search" placeholder="Search company name…" />
+    </div>
+    <div class="az-strip" id="azStrip"></div>
+    <div class="filter-row">
+      <span class="muted">Last activity:</span>
+      <button class="chip active" data-bucket="all">All</button>
+      <button class="chip" data-bucket="0-30">0–30 days</button>
+      <button class="chip" data-bucket="31-60">31–60 days</button>
+      <button class="chip" data-bucket="61-90">61–90 days</button>
+      <button class="chip" data-bucket="91+">91+ days</button>
+      <button class="chip" data-bucket="no-activity">No activity</button>
+      <span id="accountsCount" class="muted count-badge"></span>
+    </div>
+    <div class="table-wrap">
+      <table id="accountsTable">
+        <thead>
+          <tr>
+            <th>Company</th>
+            <th>Status</th>
+            <th>Lead Source</th>
+            <th>Last Activity</th>
+            <th>Days Since</th>
+            <th>Bucket</th>
+            <th>Placements</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="pagination" id="accountsPagination"></div>
+  </section>
+
+  <section id="tab-proposals" class="tab-panel hidden">
+    <p class="note">
+      "Proposal Sent" is tracked as the Bullhorn <strong>Contract Sent</strong> deal stage.
+      Rows still at <strong>Contract Sent</strong> are flagged for follow-up until they move to
+      Contract Signed / Converted / Closed-Won. Dates reflect the opportunity's last update.
+    </p>
+    <div class="filter-row">
+      <span class="muted">Status:</span>
+      <button class="chip active" data-follow="all">All</button>
+      <button class="chip" data-follow="pending">Needs follow-up</button>
+      <span id="proposalsCount" class="muted count-badge"></span>
+    </div>
+    <div class="table-wrap">
+      <table id="proposalsTable">
+        <thead>
+          <tr>
+            <th>Company</th>
+            <th>Opportunity</th>
+            <th>Deal Value</th>
+            <th>Stage</th>
+            <th>Contract/Proposal Sent</th>
+            <th>Expected Close</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<div id="modalOverlay" class="modal-overlay hidden">
+  <div class="modal">
+    <button id="modalClose" class="modal-close">&times;</button>
+    <div id="modalBody">Loading…</div>
+  </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
