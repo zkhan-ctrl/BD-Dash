@@ -1,68 +1,56 @@
 :root {
-  --bg: #f5f6f8;
-  --card: #ffffff;
-  --border: #e2e5ea;
-  --text: #1a1d24;
-  --muted: #6b7280;
+  /* Core Group Resources brand blue, sampled from the source logo file */
   --accent: #2282c0;
-  --accent-dark: #1b6a9c;
-  --green: #1a9e5c;
-  --yellow: #b58900;
-  --orange: #d9772f;
-  --red: #d64545;
-  --gray: #9aa1ac;
+  --accent-dark: #14507a;
+
+  --bg: #f4f6f9;
+  --card: #ffffff;
+  --border: #dce3ea;
+  --text: #101826;
+  --muted: #66707c;
+
+  /* Status palette tuned to sit alongside the brand blue rather than default RGB traffic-light colors */
+  --ok: #1e8a6e;
+  --warn: #b8860b;
+  --risk: #c1652f;
+  --danger: #c4453c;
+  --neutral: #94a0ac;
+
+  --font-ui: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-data: "JetBrains Mono", ui-monospace, "SF Mono", Consolas, monospace;
 }
 
 * { box-sizing: border-box; }
 
 body {
   margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--font-ui);
   background: var(--bg);
   color: var(--text);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Numeric/date/currency data gets tabular figures in a utility face, so columns of
+   numbers line up and scan quickly, rather than the proportional UI face. */
+.num {
+  font-family: var(--font-data);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.93em;
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; animation: none !important; }
 }
 
 .hidden { display: none !important; }
 .muted { color: var(--muted); font-size: 0.9em; }
 .link { color: var(--accent); text-decoration: none; font-weight: 500; }
 .link:hover { text-decoration: underline; }
-
-/* Picker screen */
-.picker-screen {
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.picker-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  padding: 40px;
-  width: 360px;
-  text-align: center;
-  box-shadow: 0 4px 16px rgba(0,0,0,0.05);
-}
-.picker-card h1 { margin: 0 0 8px; font-size: 1.4em; }
-.picker-card select {
-  width: 100%;
-  padding: 10px;
-  margin: 20px 0 12px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  font-size: 1em;
-}
-.picker-card button {
-  width: 100%;
-  padding: 10px;
-  border: none;
-  border-radius: 8px;
-  background: var(--accent);
-  color: white;
-  font-size: 1em;
-  cursor: pointer;
-}
-.picker-card button:disabled { background: var(--gray); cursor: not-allowed; }
 
 /* Dashboard */
 .dashboard-screen { max-width: 1100px; margin: 0 auto; padding: 24px; }
@@ -74,7 +62,17 @@ body {
   gap: 14px;
   margin-bottom: 20px;
 }
-.topbar h1 { margin: 0; font-size: 1.5em; }
+.topbar h1 { margin: 0; font-size: 1.5em; font-weight: 700; letter-spacing: -0.01em; }
+
+.bh-note {
+  background: #eaf3fa;
+  border-color: #cfe3f0;
+  color: #1c5c85;
+  font-size: 0.82em;
+}
+@media (prefers-color-scheme: dark) {
+  .bh-note { background: #16283a; border-color: #1f4054; color: #a8cfe8; }
+}
 
 .brand { display: flex; align-items: center; gap: 14px; flex-shrink: 0; min-width: 0; }
 .brand-logo-wrap {
@@ -140,11 +138,11 @@ tbody tr:last-child td { border-bottom: none; }
   font-weight: 600;
   color: white;
 }
-.badge.b-0-30 { background: var(--green); }
-.badge.b-31-60 { background: var(--yellow); }
-.badge.b-61-90 { background: var(--orange); }
-.badge.b-91\+ { background: var(--red); }
-.badge.b-no-activity { background: var(--gray); }
+.badge.b-0-30 { background: var(--ok); }
+.badge.b-31-60 { background: var(--warn); }
+.badge.b-61-90 { background: var(--risk); }
+.badge.b-91\+ { background: var(--danger); }
+.badge.b-no-activity { background: var(--neutral); }
 
 .followup-badge {
   display: inline-block;
@@ -152,8 +150,8 @@ tbody tr:last-child td { border-bottom: none; }
   border-radius: 999px;
   font-size: 0.8em;
   font-weight: 600;
-  background: #fdeaea;
-  color: var(--red);
+  background: #fbe9e6;
+  color: var(--danger);
 }
 
 .empty-row td { text-align: center; color: var(--muted); padding: 30px; }

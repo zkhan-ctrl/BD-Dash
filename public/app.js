@@ -158,10 +158,10 @@ function renderAccounts() {
         <td>${a.bdm || '—'}</td>
         <td>${a.status || '—'}</td>
         <td>${a.leadSource || '—'}</td>
-        <td>${fmtDate(a.lastActivity)}</td>
-        <td>${a.daysSinceActivity === null ? '—' : a.daysSinceActivity}</td>
+        <td class="num">${fmtDate(a.lastActivity)}</td>
+        <td class="num">${a.daysSinceActivity === null ? '—' : a.daysSinceActivity}</td>
         <td><span class="badge b-${a.bucket}">${bucketLabel(a.bucket)}</span></td>
-        <td>${a.placementsTotal}</td>
+        <td class="num">${a.placementsTotal}</td>
       </tr>
     `).join('');
     tbody.querySelectorAll('tr.clickable').forEach((row) => {
@@ -212,7 +212,7 @@ async function openAccountModal(id) {
       ? `<ul class="mini-list">${detail.contacts.map((c) => `
           <li>
             <span>${c.name}${c.title ? ` — ${c.title}` : ''}${c.email ? `<br><span class="muted">${c.email}</span>` : ''}</span>
-            <span class="muted">${c.lastNote ? `Last note: ${fmtDate(c.lastNote)}` : 'No notes'}<br><a href="${bullhornUrl('ClientContact', c.id)}" class="bh-link">Open in Bullhorn &#8599;</a></span>
+            <span class="muted">${c.lastNote ? `Last note: <span class="num">${fmtDate(c.lastNote)}</span>` : 'No notes'}<br><a href="${bullhornUrl('ClientContact', c.id)}" class="bh-link">Open in Bullhorn &#8599;</a></span>
           </li>`).join('')}</ul>`
       : '<div class="mini-empty">No contacts on file.</div>';
 
@@ -220,18 +220,18 @@ async function openAccountModal(id) {
       ? `<ul class="mini-list">${detail.opportunities.map((o) => `
           <li>
             <span>${o.title || 'Untitled opportunity'}<br><span class="muted">${o.dealStage}</span></span>
-            <span class="muted">${fmtMoney(o.dealValue)}<br>${fmtDate(o.dateLastModified)}<br><a href="${bullhornUrl('Opportunity', o.id)}" class="bh-link">Open in Bullhorn &#8599;</a></span>
+            <span class="muted"><span class="num">${fmtMoney(o.dealValue)}<br>${fmtDate(o.dateLastModified)}</span><br><a href="${bullhornUrl('Opportunity', o.id)}" class="bh-link">Open in Bullhorn &#8599;</a></span>
           </li>`).join('')}</ul>`
       : '<div class="mini-empty">No opportunities on file.</div>';
 
     body.innerHTML = `
       <h2>${detail.companyName} <a href="${bullhornUrl('ClientCorporation', detail.id)}" class="bh-link" title="Open in Bullhorn">&#8599;</a></h2>
-      <div class="modal-sub">${detail.status || '—'}${detail.leadSource ? ` Â· ${detail.leadSource}` : ''}${detail.website ? ` Â· ${detail.website}` : ''}${detail.phone ? ` Â· ${detail.phone}` : ''}</div>
+      <div class="modal-sub">${detail.status || '—'}${detail.leadSource ? ` · ${detail.leadSource}` : ''}${detail.website ? ` · ${detail.website}` : ''}${detail.phone ? ` · ${detail.phone}` : ''}</div>
       <p class="note">Real note/email content isn't reliably retrievable through this data connection (confirmed against your live Bullhorn — the notes exist there, just not queryable this way). Use "Open in Bullhorn" to see full note and email history for an account or contact.</p>
       <div class="stat-row">
-        <div class="stat"><div class="stat-label">Last Activity</div><div class="stat-value">${fmtDate(detail.lastActivity)}</div></div>
+        <div class="stat"><div class="stat-label">Last Activity</div><div class="stat-value num">${fmtDate(detail.lastActivity)}</div></div>
         <div class="stat"><div class="stat-label">Bucket</div><div class="stat-value"><span class="badge b-${detail.bucket}">${bucketLabel(detail.bucket)}</span></div></div>
-        <div class="stat"><div class="stat-label">Placements Total</div><div class="stat-value">${detail.placementsTotal}</div></div>
+        <div class="stat"><div class="stat-label">Placements Total</div><div class="stat-value num">${detail.placementsTotal}</div></div>
       </div>
       <h3>Contacts (${detail.contacts.length})</h3>
       ${contactsHtml}
@@ -274,11 +274,11 @@ function renderProposals() {
       <td>${p.companyName || '—'}</td>
       <td>${p.bdm || '—'}</td>
       <td>${p.title || '—'} <a href="${bullhornUrl('Opportunity', p.id)}" class="bh-link" title="Open in Bullhorn">&#8599;</a></td>
-      <td>${fmtMoney(p.dealValue)}</td>
+      <td class="num">${fmtMoney(p.dealValue)}</td>
       <td>${p.dealStage}</td>
-      <td>${fmtDate(p.contractSentDate)}</td>
-      <td>${fmtDate(p.lastActivity)}</td>
-      <td>${fmtDate(p.expectedCloseDate)}</td>
+      <td class="num">${fmtDate(p.contractSentDate)}</td>
+      <td class="num">${fmtDate(p.lastActivity)}</td>
+      <td class="num">${fmtDate(p.expectedCloseDate)}</td>
       <td>${p.needsFollowUp ? '<span class="followup-badge">Follow up</span>' : ''}</td>
     </tr>
   `).join('');
