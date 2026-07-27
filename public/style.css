@@ -143,6 +143,14 @@ tbody tr:last-child td { border-bottom: none; }
 
 tbody tr.clickable { cursor: pointer; }
 
+.bh-link {
+  color: var(--accent);
+  text-decoration: none;
+  font-size: 0.9em;
+  white-space: nowrap;
+}
+.bh-link:hover { text-decoration: underline; }
+
 /* Search + A-Z strip */
 .search-row { margin-bottom: 12px; }
 .search-row input {
