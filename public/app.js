@@ -1,4 +1,4 @@
-const PAGE_SIZE = 25;
+﻿const PAGE_SIZE = 25;
 const BULLHORN_BASE = 'https://cls32.bullhornstaffing.com/BullhornSTAFFING/OpenWindow.cfm';
 const bullhornUrl = (entity, id) => `${BULLHORN_BASE}?Entity=${entity}&id=${id}`;
 
@@ -154,7 +154,7 @@ function renderAccounts() {
   } else {
     tbody.innerHTML = pageRows.map((a) => `
       <tr class="clickable" data-id="${a.id}">
-        <td>${a.companyName || '—'} <a href="${bullhornUrl('ClientCorporation', a.id)}" target="_blank" rel="noopener" class="bh-link" title="Open in Bullhorn" onclick="event.stopPropagation()">&#8599;</a></td>
+        <td>${a.companyName || '—'} <a href="${bullhornUrl('ClientCorporation', a.id)}" class="bh-link" title="Open in Bullhorn" onclick="event.stopPropagation()">&#8599;</a></td>
         <td>${a.bdm || '—'}</td>
         <td>${a.status || '—'}</td>
         <td>${a.leadSource || '—'}</td>
@@ -212,7 +212,7 @@ async function openAccountModal(id) {
       ? `<ul class="mini-list">${detail.contacts.map((c) => `
           <li>
             <span>${c.name}${c.title ? ` — ${c.title}` : ''}${c.email ? `<br><span class="muted">${c.email}</span>` : ''}</span>
-            <span class="muted">${c.lastNote ? `Last note: ${fmtDate(c.lastNote)}` : 'No notes'}<br><a href="${bullhornUrl('ClientContact', c.id)}" target="_blank" rel="noopener" class="bh-link">Open in Bullhorn &#8599;</a></span>
+            <span class="muted">${c.lastNote ? `Last note: ${fmtDate(c.lastNote)}` : 'No notes'}<br><a href="${bullhornUrl('ClientContact', c.id)}" class="bh-link">Open in Bullhorn &#8599;</a></span>
           </li>`).join('')}</ul>`
       : '<div class="mini-empty">No contacts on file.</div>';
 
@@ -220,13 +220,13 @@ async function openAccountModal(id) {
       ? `<ul class="mini-list">${detail.opportunities.map((o) => `
           <li>
             <span>${o.title || 'Untitled opportunity'}<br><span class="muted">${o.dealStage}</span></span>
-            <span class="muted">${fmtMoney(o.dealValue)}<br>${fmtDate(o.dateLastModified)}<br><a href="${bullhornUrl('Opportunity', o.id)}" target="_blank" rel="noopener" class="bh-link">Open in Bullhorn &#8599;</a></span>
+            <span class="muted">${fmtMoney(o.dealValue)}<br>${fmtDate(o.dateLastModified)}<br><a href="${bullhornUrl('Opportunity', o.id)}" class="bh-link">Open in Bullhorn &#8599;</a></span>
           </li>`).join('')}</ul>`
       : '<div class="mini-empty">No opportunities on file.</div>';
 
     body.innerHTML = `
-      <h2>${detail.companyName} <a href="${bullhornUrl('ClientCorporation', detail.id)}" target="_blank" rel="noopener" class="bh-link" title="Open in Bullhorn">&#8599;</a></h2>
-      <div class="modal-sub">${detail.status || '—'}${detail.leadSource ? ` · ${detail.leadSource}` : ''}${detail.website ? ` · ${detail.website}` : ''}${detail.phone ? ` · ${detail.phone}` : ''}</div>
+      <h2>${detail.companyName} <a href="${bullhornUrl('ClientCorporation', detail.id)}" class="bh-link" title="Open in Bullhorn">&#8599;</a></h2>
+      <div class="modal-sub">${detail.status || '—'}${detail.leadSource ? ` Â· ${detail.leadSource}` : ''}${detail.website ? ` Â· ${detail.website}` : ''}${detail.phone ? ` Â· ${detail.phone}` : ''}</div>
       <p class="note">Real note/email content isn't reliably retrievable through this data connection (confirmed against your live Bullhorn — the notes exist there, just not queryable this way). Use "Open in Bullhorn" to see full note and email history for an account or contact.</p>
       <div class="stat-row">
         <div class="stat"><div class="stat-label">Last Activity</div><div class="stat-value">${fmtDate(detail.lastActivity)}</div></div>
@@ -273,7 +273,7 @@ function renderProposals() {
     <tr>
       <td>${p.companyName || '—'}</td>
       <td>${p.bdm || '—'}</td>
-      <td>${p.title || '—'} <a href="${bullhornUrl('Opportunity', p.id)}" target="_blank" rel="noopener" class="bh-link" title="Open in Bullhorn">&#8599;</a></td>
+      <td>${p.title || '—'} <a href="${bullhornUrl('Opportunity', p.id)}" class="bh-link" title="Open in Bullhorn">&#8599;</a></td>
       <td>${fmtMoney(p.dealValue)}</td>
       <td>${p.dealStage}</td>
       <td>${fmtDate(p.contractSentDate)}</td>
