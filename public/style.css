@@ -294,7 +294,7 @@ tbody tr.clickable { cursor: pointer; }
   overflow-y: auto;
   z-index: 50;
 }
-#statusDropdownPanel { right: auto; left: 0; }
+#statusDropdownPanel, #stageDropdownPanel { right: auto; left: 0; }
 .dropdown-panel-actions { display: flex; gap: 8px; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
 .dropdown-panel-actions button {
   flex: 1;

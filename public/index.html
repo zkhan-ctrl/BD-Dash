@@ -110,9 +110,21 @@
       </div>
     </div>
     <div class="filter-row">
-      <span class="muted">Status:</span>
+      <span class="muted">Follow-up:</span>
       <button class="chip active" data-follow="all">All</button>
       <button class="chip" data-follow="pending">Needs follow-up</button>
+    </div>
+    <div class="filter-row">
+      <div class="dropdown" id="stageDropdown">
+        <button class="dropdown-btn small" id="stageDropdownBtn">Stage: All <span class="caret">&#9662;</span></button>
+        <div class="dropdown-panel hidden" id="stageDropdownPanel">
+          <div class="dropdown-panel-actions">
+            <button data-action="all">Select all</button>
+            <button data-action="none">Clear</button>
+          </div>
+          <div id="stageCheckboxList"></div>
+        </div>
+      </div>
       <span id="proposalsCount" class="muted count-badge"></span>
     </div>
     <div class="table-wrap">

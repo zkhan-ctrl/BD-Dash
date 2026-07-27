@@ -9,8 +9,10 @@ const bucketLabel = (b) => ({ '0-30': '0–30', '31-60': '31–60', '61-90': '61
 
 let dashboard = { bdms: [], accounts: [], proposals: [] };
 let allStatuses = [];
+let allStages = [];
 let selectedBdms = new Set();
 let selectedStatuses = new Set();
+let selectedStages = new Set();
 
 const accountsState = { bucket: 'all', letter: 'all', search: '', page: 1, dateFrom: '', dateTo: '' };
 const proposalsState = { follow: 'all', dateFrom: '', dateTo: '' };
@@ -22,11 +24,14 @@ async function loadDashboard(force = false) {
   selectedBdms = new Set(data.bdms);
   allStatuses = [...new Set(data.accounts.map((a) => a.status).filter(Boolean))].sort();
   selectedStatuses = new Set(allStatuses);
+  allStages = [...new Set(data.proposals.map((p) => p.dealStage).filter(Boolean))].sort();
+  selectedStages = new Set(allStages);
 
   document.getElementById('lastUpdated').textContent = `Live data as of ${fmtDateTime(data.generatedAt)}`;
 
   buildBdmDropdown();
   buildStatusDropdown();
+  buildStageDropdown();
   buildAzStrip();
   renderAccounts();
   renderProposals();
@@ -77,6 +82,27 @@ function updateStatusButtonLabel() {
   btn.innerHTML = (n === allStatuses.length ? 'Status: All' : n === 0 ? 'Status: None' : `Status: ${n} selected`) + ' <span class="caret">&#9662;</span>';
 }
 
+function buildStageDropdown() {
+  const list = document.getElementById('stageCheckboxList');
+  list.innerHTML = allStages.map((s) => `
+    <label><input type="checkbox" value="${s}" ${selectedStages.has(s) ? 'checked' : ''}> ${s}</label>
+  `).join('');
+  list.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
+    cb.addEventListener('change', () => {
+      if (cb.checked) selectedStages.add(cb.value); else selectedStages.delete(cb.value);
+      updateStageButtonLabel();
+      renderProposals();
+    });
+  });
+  updateStageButtonLabel();
+}
+
+function updateStageButtonLabel() {
+  const btn = document.getElementById('stageDropdownBtn');
+  const n = selectedStages.size;
+  btn.innerHTML = (n === allStages.length ? 'Stage: All' : n === 0 ? 'Stage: None' : `Stage: ${n} selected`) + ' <span class="caret">&#9662;</span>';
+}
+
 function setupDropdown(btnId, panelId) {
   const btn = document.getElementById(btnId);
   const panel = document.getElementById(panelId);
@@ -95,6 +121,7 @@ function setupDropdown(btnId, panelId) {
 document.addEventListener('click', () => document.querySelectorAll('.dropdown-panel').forEach((p) => p.classList.add('hidden')));
 setupDropdown('bdmDropdownBtn', 'bdmDropdownPanel');
 setupDropdown('statusDropdownBtn', 'statusDropdownPanel');
+setupDropdown('stageDropdownBtn', 'stageDropdownPanel');
 
 document.getElementById('refreshBtn').addEventListener('click', () => loadDashboard(true));
 
@@ -253,6 +280,7 @@ document.getElementById('modalOverlay').addEventListener('click', (e) => {
 function getFilteredProposals() {
   return dashboard.proposals.filter((p) => {
     if (!selectedBdms.has(p.bdm)) return false;
+    if (!selectedStages.has(p.dealStage)) return false;
     if (proposalsState.follow === 'pending' && !p.needsFollowUp) return false;
     if (!inDateRange(p.contractSentDate, proposalsState.dateFrom, proposalsState.dateTo)) return false;
     return true;
@@ -270,10 +298,10 @@ function renderProposals() {
   }
 
   tbody.innerHTML = rows.map((p) => `
-    <tr>
+    <tr class="clickable" data-id="${p.companyId}">
       <td>${p.companyName || '—'}</td>
       <td>${p.bdm || '—'}</td>
-      <td>${p.title || '—'} <a href="${bullhornUrl('Opportunity', p.id)}" class="bh-link" title="Open in Bullhorn">&#8599;</a></td>
+      <td>${p.title || '—'} <a href="${bullhornUrl('Opportunity', p.id)}" class="bh-link" title="Open in Bullhorn" onclick="event.stopPropagation()">&#8599;</a></td>
       <td class="num">${fmtMoney(p.dealValue)}</td>
       <td>${p.dealStage}</td>
       <td class="num">${fmtDate(p.contractSentDate)}</td>
@@ -282,6 +310,9 @@ function renderProposals() {
       <td>${p.needsFollowUp ? '<span class="followup-badge">Follow up</span>' : ''}</td>
     </tr>
   `).join('');
+  tbody.querySelectorAll('tr.clickable').forEach((row) => {
+    row.addEventListener('click', () => openAccountModal(row.dataset.id));
+  });
 }
 
 document.getElementById('proposalsDateFrom').addEventListener('change', (e) => { proposalsState.dateFrom = e.target.value; renderProposals(); });
