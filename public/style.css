@@ -231,6 +231,92 @@ tbody tr.clickable { cursor: pointer; }
 .modal .mini-list li:last-child { border-bottom: none; }
 .modal .mini-empty { color: var(--muted); font-size: 0.85em; padding: 6px 0; }
 
+/* Topbar actions + dropdowns */
+.topbar-actions { display: flex; align-items: center; gap: 10px; }
+.link-btn {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.85em;
+}
+.link-btn:hover { background: var(--bg); }
+.last-updated { margin-bottom: 14px; }
+
+.dropdown { position: relative; }
+.dropdown-btn {
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.88em;
+}
+.dropdown-btn.small { padding: 6px 12px; font-size: 0.85em; }
+.caret { font-size: 0.75em; }
+.dropdown-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  padding: 10px;
+  min-width: 220px;
+  max-height: 320px;
+  overflow-y: auto;
+  z-index: 50;
+}
+#statusDropdownPanel { right: auto; left: 0; }
+.dropdown-panel-actions { display: flex; gap: 8px; margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--border); }
+.dropdown-panel-actions button {
+  flex: 1;
+  padding: 5px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 0.8em;
+}
+.dropdown-panel label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 4px;
+  font-size: 0.88em;
+  cursor: pointer;
+}
+.dropdown-panel input[type="checkbox"] { cursor: pointer; }
+
+/* Search row + date filter */
+.search-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 12px; }
+.search-row input[type="search"] {
+  flex: 1;
+  min-width: 200px;
+  max-width: 340px;
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  font-size: 0.9em;
+}
+.date-filter { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.date-filter label { font-size: 0.85em; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+.date-filter input[type="date"] {
+  padding: 6px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+  font-size: 0.85em;
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --bg: #14161b;

@@ -8,42 +8,63 @@
 </head>
 <body>
 
-<div id="picker" class="picker-screen">
-  <div class="picker-card">
-    <h1>BD Dashboard</h1>
-    <p class="muted">Select your name to view your accounts and proposals.</p>
-    <select id="bdmSelect"><option value="">Loading BDMs…</option></select>
-    <button id="goBtn" disabled>View My Dashboard</button>
-  </div>
-</div>
-
-<div id="dashboard" class="dashboard-screen hidden">
+<div id="dashboard" class="dashboard-screen">
   <header class="topbar">
     <div>
-      <h1 id="bdmName">—</h1>
-      <span class="muted">Bullhorn CRM · BD Dashboard</span>
+      <h1>BD Dashboard</h1>
+      <span class="muted">Bullhorn CRM · Core Group Resources</span>
     </div>
-    <a href="/" class="link">Switch BDM</a>
+    <div class="topbar-actions">
+      <div class="dropdown" id="bdmDropdown">
+        <button class="dropdown-btn" id="bdmDropdownBtn">BDs: All <span class="caret">&#9662;</span></button>
+        <div class="dropdown-panel hidden" id="bdmDropdownPanel">
+          <div class="dropdown-panel-actions">
+            <button data-action="all">Select all</button>
+            <button data-action="none">Clear</button>
+          </div>
+          <div id="bdmCheckboxList"></div>
+        </div>
+      </div>
+      <button id="refreshBtn" class="link-btn" title="Reload live data from Bullhorn">&#8635; Refresh</button>
+    </div>
   </header>
+  <div id="lastUpdated" class="muted last-updated"></div>
 
   <nav class="tabs">
-    <button class="tab-btn active" data-tab="accounts">My Accounts (A–Z)</button>
+    <button class="tab-btn active" data-tab="accounts">Accounts (A–Z)</button>
     <button class="tab-btn" data-tab="proposals">Proposals Sent</button>
   </nav>
 
   <section id="tab-accounts" class="tab-panel">
     <div class="search-row">
       <input id="accountSearch" type="search" placeholder="Search company name…" />
+      <div class="date-filter">
+        <label>Last activity from <input type="date" id="accountsDateFrom" /></label>
+        <label>to <input type="date" id="accountsDateTo" /></label>
+        <button id="accountsDateClear" class="link-btn">Clear</button>
+      </div>
     </div>
     <div class="az-strip" id="azStrip"></div>
     <div class="filter-row">
-      <span class="muted">Last activity:</span>
+      <span class="muted">Activity:</span>
       <button class="chip active" data-bucket="all">All</button>
       <button class="chip" data-bucket="0-30">0–30 days</button>
       <button class="chip" data-bucket="31-60">31–60 days</button>
       <button class="chip" data-bucket="61-90">61–90 days</button>
       <button class="chip" data-bucket="91+">91+ days</button>
       <button class="chip" data-bucket="no-activity">No activity</button>
+    </div>
+    <div class="filter-row">
+      <div class="dropdown" id="statusDropdown">
+        <button class="dropdown-btn small" id="statusDropdownBtn">Status: All <span class="caret">&#9662;</span></button>
+        <div class="dropdown-panel hidden" id="statusDropdownPanel">
+          <div class="dropdown-panel-actions">
+            <button data-action="all">Select all</button>
+            <button data-action="none">Clear</button>
+          </div>
+          <div id="statusCheckboxList"></div>
+        </div>
+      </div>
       <span id="accountsCount" class="muted count-badge"></span>
     </div>
     <div class="table-wrap">
@@ -51,10 +72,11 @@
         <thead>
           <tr>
             <th>Company</th>
+            <th>BD</th>
             <th>Status</th>
             <th>Lead Source</th>
             <th>Last Activity</th>
-            <th>Days Since</th>
+            <th>Days Since Last Activity</th>
             <th>Bucket</th>
             <th>Placements</th>
           </tr>
@@ -69,8 +91,16 @@
     <p class="note">
       "Proposal Sent" is tracked as the Bullhorn <strong>Contract Sent</strong> deal stage.
       Rows still at <strong>Contract Sent</strong> are flagged for follow-up until they move to
-      Contract Signed / Converted / Closed-Won. Dates reflect the opportunity's last update.
+      Contract Signed / Converted / Closed-Won. "Last Activity" is the account's overall last
+      activity (may be more recent than the sent date if there's been other movement on the account).
     </p>
+    <div class="search-row">
+      <div class="date-filter">
+        <label>Sent from <input type="date" id="proposalsDateFrom" /></label>
+        <label>to <input type="date" id="proposalsDateTo" /></label>
+        <button id="proposalsDateClear" class="link-btn">Clear</button>
+      </div>
+    </div>
     <div class="filter-row">
       <span class="muted">Status:</span>
       <button class="chip active" data-follow="all">All</button>
@@ -82,10 +112,12 @@
         <thead>
           <tr>
             <th>Company</th>
+            <th>BD</th>
             <th>Opportunity</th>
             <th>Deal Value</th>
             <th>Stage</th>
             <th>Contract/Proposal Sent</th>
+            <th>Last Activity</th>
             <th>Expected Close</th>
             <th></th>
           </tr>

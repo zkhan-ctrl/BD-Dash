@@ -9,9 +9,31 @@ function authHeader() {
   return `Basic ${token}`;
 }
 
-// Single-quoted SQL string literal escape.
+// This connector does NOT support standard SQL '' apostrophe-escaping (it's translated
+// to Bullhorn's own query language underneath and errors on it). Values containing an
+// apostrophe are matched with LIKE, substituting '_' (matches exactly one char) for the
+// apostrophe, which gives an exact-length match without ever emitting a raw quote.
+function literal(value) {
+  const str = String(value);
+  if (str.includes("'")) {
+    return { op: 'LIKE', value: str.replace(/'/g, '_') };
+  }
+  return { op: '=', value: str };
+}
+
 function esc(value) {
-  return String(value).replace(/'/g, "''");
+  // Only safe for values guaranteed not to contain an apostrophe (e.g. enum-like stage names).
+  return String(value).replace(/'/g, '');
+}
+
+// Builds `(column = 'a' OR column LIKE 'b_c' OR ...)` across a list of values,
+// working around the apostrophe-escaping limitation above.
+function matchAny(column, values) {
+  const clauses = values.map((v) => {
+    const { op, value } = literal(v);
+    return `${column} ${op} '${value}'`;
+  });
+  return `(${clauses.join(' OR ')})`;
 }
 
 async function runQuery(query) {
@@ -45,4 +67,4 @@ async function runQuery(query) {
   });
 }
 
-module.exports = { runQuery, esc, TABLE };
+module.exports = { runQuery, esc, matchAny, TABLE };

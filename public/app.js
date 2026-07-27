@@ -1,58 +1,103 @@
-const params = new URLSearchParams(location.search);
-const bdmFromUrl = params.get('bdm');
 const PAGE_SIZE = 25;
 
 const fmtMoney = (v) => (v || v === 0) ? Number(v).toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }) : '—';
 const fmtDate = (v) => v ? new Date(v).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) : '—';
+const fmtDateTime = (v) => v ? new Date(v).toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '—';
 const bucketLabel = (b) => ({ '0-30': '0–30', '31-60': '31–60', '61-90': '61–90', '91+': '91+', 'no-activity': 'No activity' }[b] || b);
 
-async function loadBdms() {
-  const select = document.getElementById('bdmSelect');
-  const goBtn = document.getElementById('goBtn');
-  try {
-    const bdms = await fetch('/api/bdms').then((r) => r.json());
-    select.innerHTML = '<option value="">Select your name…</option>' +
-      bdms.map((name) => `<option value="${name}">${name}</option>`).join('');
-    if (bdmFromUrl && bdms.includes(bdmFromUrl)) {
-      select.value = bdmFromUrl;
-      goBtn.disabled = false;
-      showDashboard(bdmFromUrl);
-    }
-  } catch (err) {
-    select.innerHTML = '<option value="">Failed to load BDMs</option>';
-    console.error(err);
-  }
-  select.addEventListener('change', () => { goBtn.disabled = !select.value; });
-  goBtn.addEventListener('click', () => {
-    if (select.value) {
-      history.pushState({}, '', `/?bdm=${encodeURIComponent(select.value)}`);
-      showDashboard(select.value);
-    }
-  });
-}
+let dashboard = { bdms: [], accounts: [], proposals: [] };
+let allStatuses = [];
+let selectedBdms = new Set();
+let selectedStatuses = new Set();
 
-let accountsData = [];
-let proposalsData = [];
-const accountsState = { bucket: 'all', letter: 'all', search: '', page: 1 };
+const accountsState = { bucket: 'all', letter: 'all', search: '', page: 1, dateFrom: '', dateTo: '' };
+const proposalsState = { follow: 'all', dateFrom: '', dateTo: '' };
 
-async function showDashboard(bdm) {
-  document.getElementById('picker').classList.add('hidden');
-  document.getElementById('dashboard').classList.remove('hidden');
-  document.getElementById('bdmName').textContent = bdm;
+async function loadDashboard(force = false) {
+  document.getElementById('lastUpdated').textContent = 'Loading live data from Bullhorn…';
+  const data = await fetch(`/api/dashboard${force ? '?refresh=1' : ''}`).then((r) => r.json());
+  dashboard = data;
+  selectedBdms = new Set(data.bdms);
+  allStatuses = [...new Set(data.accounts.map((a) => a.status).filter(Boolean))].sort();
+  selectedStatuses = new Set(allStatuses);
 
-  const [accounts, proposals] = await Promise.all([
-    fetch(`/api/accounts?bdm=${encodeURIComponent(bdm)}`).then((r) => r.json()),
-    fetch(`/api/proposals?bdm=${encodeURIComponent(bdm)}`).then((r) => r.json()),
-  ]);
-  accountsData = accounts;
-  proposalsData = proposals;
+  document.getElementById('lastUpdated').textContent = `Live data as of ${fmtDateTime(data.generatedAt)}`;
+
+  buildBdmDropdown();
+  buildStatusDropdown();
   buildAzStrip();
   renderAccounts();
-  renderProposals('all');
+  renderProposals();
 }
 
+function buildBdmDropdown() {
+  const list = document.getElementById('bdmCheckboxList');
+  list.innerHTML = dashboard.bdms.map((name) => `
+    <label><input type="checkbox" value="${name}" ${selectedBdms.has(name) ? 'checked' : ''}> ${name}</label>
+  `).join('');
+  list.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
+    cb.addEventListener('change', () => {
+      if (cb.checked) selectedBdms.add(cb.value); else selectedBdms.delete(cb.value);
+      updateBdmButtonLabel();
+      accountsState.page = 1;
+      renderAccounts();
+      renderProposals();
+    });
+  });
+  updateBdmButtonLabel();
+}
+
+function updateBdmButtonLabel() {
+  const btn = document.getElementById('bdmDropdownBtn');
+  const n = selectedBdms.size;
+  btn.innerHTML = (n === dashboard.bdms.length ? 'BDs: All' : n === 0 ? 'BDs: None' : `BDs: ${n} selected`) + ' <span class="caret">&#9662;</span>';
+}
+
+function buildStatusDropdown() {
+  const list = document.getElementById('statusCheckboxList');
+  list.innerHTML = allStatuses.map((s) => `
+    <label><input type="checkbox" value="${s}" ${selectedStatuses.has(s) ? 'checked' : ''}> ${s}</label>
+  `).join('');
+  list.querySelectorAll('input[type="checkbox"]').forEach((cb) => {
+    cb.addEventListener('change', () => {
+      if (cb.checked) selectedStatuses.add(cb.value); else selectedStatuses.delete(cb.value);
+      updateStatusButtonLabel();
+      accountsState.page = 1;
+      renderAccounts();
+    });
+  });
+  updateStatusButtonLabel();
+}
+
+function updateStatusButtonLabel() {
+  const btn = document.getElementById('statusDropdownBtn');
+  const n = selectedStatuses.size;
+  btn.innerHTML = (n === allStatuses.length ? 'Status: All' : n === 0 ? 'Status: None' : `Status: ${n} selected`) + ' <span class="caret">&#9662;</span>';
+}
+
+function setupDropdown(btnId, panelId) {
+  const btn = document.getElementById(btnId);
+  const panel = document.getElementById(panelId);
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    document.querySelectorAll('.dropdown-panel').forEach((p) => { if (p !== panel) p.classList.add('hidden'); });
+    panel.classList.toggle('hidden');
+  });
+  panel.querySelectorAll('.dropdown-panel-actions button').forEach((actionBtn) => {
+    actionBtn.addEventListener('click', () => {
+      const checkboxes = panel.querySelectorAll('input[type="checkbox"]');
+      checkboxes.forEach((cb) => { cb.checked = actionBtn.dataset.action === 'all'; cb.dispatchEvent(new Event('change')); });
+    });
+  });
+}
+document.addEventListener('click', () => document.querySelectorAll('.dropdown-panel').forEach((p) => p.classList.add('hidden')));
+setupDropdown('bdmDropdownBtn', 'bdmDropdownPanel');
+setupDropdown('statusDropdownBtn', 'statusDropdownPanel');
+
+document.getElementById('refreshBtn').addEventListener('click', () => loadDashboard(true));
+
 function buildAzStrip() {
-  const present = new Set(accountsData.map((a) => (a.companyName || '?').trim()[0]?.toUpperCase()));
+  const present = new Set(dashboard.accounts.map((a) => (a.companyName || '?').trim()[0]?.toUpperCase()));
   const strip = document.getElementById('azStrip');
   const letters = ['ALL', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')];
   strip.innerHTML = letters.map((l) => {
@@ -71,11 +116,23 @@ function buildAzStrip() {
   });
 }
 
+function inDateRange(dateStr, from, to) {
+  if (!from && !to) return true;
+  if (!dateStr) return false;
+  const t = new Date(dateStr).getTime();
+  if (from && t < new Date(from).getTime()) return false;
+  if (to && t > new Date(to).getTime() + 24 * 60 * 60 * 1000 - 1) return false;
+  return true;
+}
+
 function getFilteredAccounts() {
-  return accountsData.filter((a) => {
+  return dashboard.accounts.filter((a) => {
+    if (!selectedBdms.has(a.bdm)) return false;
+    if (!selectedStatuses.has(a.status)) return false;
     if (accountsState.bucket !== 'all' && a.bucket !== accountsState.bucket) return false;
     if (accountsState.letter !== 'all' && (a.companyName || '?').trim()[0]?.toUpperCase() !== accountsState.letter) return false;
     if (accountsState.search && !(a.companyName || '').toLowerCase().includes(accountsState.search.toLowerCase())) return false;
+    if (!inDateRange(a.lastActivity, accountsState.dateFrom, accountsState.dateTo)) return false;
     return true;
   });
 }
@@ -91,11 +148,12 @@ function renderAccounts() {
   const tbody = document.querySelector('#accountsTable tbody');
 
   if (!pageRows.length) {
-    tbody.innerHTML = '<tr class="empty-row"><td colspan="7">No accounts match this filter.</td></tr>';
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="8">No accounts match this filter.</td></tr>';
   } else {
     tbody.innerHTML = pageRows.map((a) => `
       <tr class="clickable" data-id="${a.id}">
         <td>${a.companyName || '—'}</td>
+        <td>${a.bdm || '—'}</td>
         <td>${a.status || '—'}</td>
         <td>${a.leadSource || '—'}</td>
         <td>${fmtDate(a.lastActivity)}</td>
@@ -127,6 +185,14 @@ function renderPagination(totalPages) {
 document.getElementById('accountSearch').addEventListener('input', (e) => {
   accountsState.search = e.target.value;
   accountsState.page = 1;
+  renderAccounts();
+});
+document.getElementById('accountsDateFrom').addEventListener('change', (e) => { accountsState.dateFrom = e.target.value; accountsState.page = 1; renderAccounts(); });
+document.getElementById('accountsDateTo').addEventListener('change', (e) => { accountsState.dateTo = e.target.value; accountsState.page = 1; renderAccounts(); });
+document.getElementById('accountsDateClear').addEventListener('click', () => {
+  accountsState.dateFrom = ''; accountsState.dateTo = '';
+  document.getElementById('accountsDateFrom').value = '';
+  document.getElementById('accountsDateTo').value = '';
   renderAccounts();
 });
 
@@ -164,7 +230,7 @@ async function openAccountModal(id) {
         <div class="stat"><div class="stat-label">Bucket</div><div class="stat-value"><span class="badge b-${detail.bucket}">${bucketLabel(detail.bucket)}</span></div></div>
         <div class="stat"><div class="stat-label">Placements Total</div><div class="stat-value">${detail.placementsTotal}</div></div>
       </div>
-      <h3>Contacts (${detail.contacts.length})</h3>
+      <h3>Contacts (${detail.contacts.length}) <span class="muted" style="font-weight:400;font-size:0.8em;">— last note date only; note text isn't reliably linked to companies in this Bullhorn instance</span></h3>
       ${contactsHtml}
       <h3>Opportunities (${detail.opportunities.length})</h3>
       ${oppsHtml}
@@ -181,28 +247,48 @@ document.getElementById('modalOverlay').addEventListener('click', (e) => {
   if (e.target.id === 'modalOverlay') document.getElementById('modalOverlay').classList.add('hidden');
 });
 
-function renderProposals(followFilter) {
-  const rows = followFilter === 'pending' ? proposalsData.filter((p) => p.needsFollowUp) : proposalsData;
+function getFilteredProposals() {
+  return dashboard.proposals.filter((p) => {
+    if (!selectedBdms.has(p.bdm)) return false;
+    if (proposalsState.follow === 'pending' && !p.needsFollowUp) return false;
+    if (!inDateRange(p.contractSentDate, proposalsState.dateFrom, proposalsState.dateTo)) return false;
+    return true;
+  });
+}
+
+function renderProposals() {
+  const rows = getFilteredProposals();
   const tbody = document.querySelector('#proposalsTable tbody');
   document.getElementById('proposalsCount').textContent = `${rows.length} proposal${rows.length === 1 ? '' : 's'}`;
 
   if (!rows.length) {
-    tbody.innerHTML = '<tr class="empty-row"><td colspan="7">No proposals in this range.</td></tr>';
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="9">No proposals match this filter.</td></tr>';
     return;
   }
 
   tbody.innerHTML = rows.map((p) => `
     <tr>
       <td>${p.companyName || '—'}</td>
+      <td>${p.bdm || '—'}</td>
       <td>${p.title || '—'}</td>
       <td>${fmtMoney(p.dealValue)}</td>
       <td>${p.dealStage}</td>
       <td>${fmtDate(p.contractSentDate)}</td>
+      <td>${fmtDate(p.lastActivity)}</td>
       <td>${fmtDate(p.expectedCloseDate)}</td>
       <td>${p.needsFollowUp ? '<span class="followup-badge">Follow up</span>' : ''}</td>
     </tr>
   `).join('');
 }
+
+document.getElementById('proposalsDateFrom').addEventListener('change', (e) => { proposalsState.dateFrom = e.target.value; renderProposals(); });
+document.getElementById('proposalsDateTo').addEventListener('change', (e) => { proposalsState.dateTo = e.target.value; renderProposals(); });
+document.getElementById('proposalsDateClear').addEventListener('click', () => {
+  proposalsState.dateFrom = ''; proposalsState.dateTo = '';
+  document.getElementById('proposalsDateFrom').value = '';
+  document.getElementById('proposalsDateTo').value = '';
+  renderProposals();
+});
 
 document.querySelectorAll('.tab-btn').forEach((btn) => {
   btn.addEventListener('click', () => {
@@ -227,8 +313,9 @@ document.querySelectorAll('#tab-proposals .chip').forEach((chip) => {
   chip.addEventListener('click', () => {
     document.querySelectorAll('#tab-proposals .chip').forEach((c) => c.classList.remove('active'));
     chip.classList.add('active');
-    renderProposals(chip.dataset.follow);
+    proposalsState.follow = chip.dataset.follow;
+    renderProposals();
   });
 });
 
-loadBdms();
+loadDashboard();
