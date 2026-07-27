@@ -68,13 +68,15 @@ body {
 .dashboard-screen { max-width: 1100px; margin: 0 auto; padding: 24px; }
 .topbar {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: center;
+  gap: 14px;
   margin-bottom: 20px;
 }
 .topbar h1 { margin: 0; font-size: 1.5em; }
 
-.brand { display: flex; align-items: center; gap: 14px; }
+.brand { display: flex; align-items: center; gap: 14px; flex-shrink: 0; min-width: 0; }
 .brand-logo-wrap {
   background: #ffffff;
   border: 1px solid var(--border);
@@ -82,9 +84,10 @@ body {
   padding: 8px 12px;
   display: flex;
   align-items: center;
+  flex-shrink: 0;
   box-shadow: 0 1px 3px rgba(0,0,0,0.06);
 }
-.brand-logo { height: 28px; width: auto; display: block; }
+.brand-logo { height: 28px; width: auto; max-width: none; display: block; flex-shrink: 0; }
 
 .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
 .tab-btn {
