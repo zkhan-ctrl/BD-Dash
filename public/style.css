@@ -4,7 +4,8 @@
   --border: #e2e5ea;
   --text: #1a1d24;
   --muted: #6b7280;
-  --accent: #2f5fed;
+  --accent: #2282c0;
+  --accent-dark: #1b6a9c;
   --green: #1a9e5c;
   --yellow: #b58900;
   --orange: #d9772f;
@@ -73,6 +74,18 @@ body {
 }
 .topbar h1 { margin: 0; font-size: 1.5em; }
 
+.brand { display: flex; align-items: center; gap: 14px; }
+.brand-logo-wrap {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+.brand-logo { height: 28px; width: auto; display: block; }
+
 .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
 .tab-btn {
   padding: 10px 18px;
@@ -96,6 +109,7 @@ body {
   color: var(--text);
 }
 .chip.active { background: var(--accent); color: white; border-color: var(--accent); }
+.chip.active:hover { background: var(--accent-dark); border-color: var(--accent-dark); }
 .count-badge { margin-left: auto; }
 
 .note {
