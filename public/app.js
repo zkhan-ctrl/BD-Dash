@@ -15,7 +15,10 @@ let selectedStatuses = new Set();
 let selectedStages = new Set();
 
 const accountsState = { bucket: 'all', letter: 'all', search: '', page: 1, dateFrom: '', dateTo: '' };
-const proposalsState = { follow: 'all', dateFrom: '', dateTo: '' };
+const proposalsState = {
+  follow: 'all', bucket: 'all', letter: 'all', search: '', page: 1,
+  dateFrom: '', dateTo: '', activityFrom: '', activityTo: '',
+};
 
 async function loadDashboard(force = false) {
   document.getElementById('lastUpdated').textContent = 'Loading live data from Bullhorn…';
@@ -33,6 +36,7 @@ async function loadDashboard(force = false) {
   buildStatusDropdown();
   buildStageDropdown();
   buildAzStrip();
+  buildProposalsAzStrip();
   renderAccounts();
   renderProposals();
 }
@@ -47,6 +51,7 @@ function buildBdmDropdown() {
       if (cb.checked) selectedBdms.add(cb.value); else selectedBdms.delete(cb.value);
       updateBdmButtonLabel();
       accountsState.page = 1;
+      proposalsState.page = 1;
       renderAccounts();
       renderProposals();
     });
@@ -91,6 +96,7 @@ function buildStageDropdown() {
     cb.addEventListener('change', () => {
       if (cb.checked) selectedStages.add(cb.value); else selectedStages.delete(cb.value);
       updateStageButtonLabel();
+      proposalsState.page = 1;
       renderProposals();
     });
   });
@@ -141,6 +147,26 @@ function buildAzStrip() {
       accountsState.letter = btn.dataset.letter;
       accountsState.page = 1;
       renderAccounts();
+    });
+  });
+}
+
+function buildProposalsAzStrip() {
+  const present = new Set(dashboard.proposals.map((p) => (p.companyName || '?').trim()[0]?.toUpperCase()));
+  const strip = document.getElementById('proposalsAzStrip');
+  const letters = ['ALL', ...'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('')];
+  strip.innerHTML = letters.map((l) => {
+    const val = l === 'ALL' ? 'all' : l;
+    const disabled = l !== 'ALL' && !present.has(l);
+    return `<button class="az-btn ${val === 'all' ? 'active' : ''}" data-letter="${val}" ${disabled ? 'disabled' : ''}>${l === 'ALL' ? 'All' : l}</button>`;
+  }).join('');
+  strip.querySelectorAll('.az-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      strip.querySelectorAll('.az-btn').forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      proposalsState.letter = btn.dataset.letter;
+      proposalsState.page = 1;
+      renderProposals();
     });
   });
 }
@@ -282,45 +308,81 @@ function getFilteredProposals() {
     if (!selectedBdms.has(p.bdm)) return false;
     if (!selectedStages.has(p.dealStage)) return false;
     if (proposalsState.follow === 'pending' && !p.needsFollowUp) return false;
+    if (proposalsState.bucket !== 'all' && p.bucket !== proposalsState.bucket) return false;
+    if (proposalsState.letter !== 'all' && (p.companyName || '?').trim()[0]?.toUpperCase() !== proposalsState.letter) return false;
+    if (proposalsState.search && !(p.companyName || '').toLowerCase().includes(proposalsState.search.toLowerCase())) return false;
     if (!inDateRange(p.contractSentDate, proposalsState.dateFrom, proposalsState.dateTo)) return false;
+    if (!inDateRange(p.lastActivity, proposalsState.activityFrom, proposalsState.activityTo)) return false;
     return true;
   });
 }
 
 function renderProposals() {
-  const rows = getFilteredProposals();
+  const filtered = getFilteredProposals();
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  proposalsState.page = Math.min(proposalsState.page, totalPages);
+  const start = (proposalsState.page - 1) * PAGE_SIZE;
+  const rows = filtered.slice(start, start + PAGE_SIZE);
+
   const tbody = document.querySelector('#proposalsTable tbody');
-  document.getElementById('proposalsCount').textContent = `${rows.length} proposal${rows.length === 1 ? '' : 's'}`;
+  document.getElementById('proposalsCount').textContent = `${filtered.length} proposal${filtered.length === 1 ? '' : 's'}`;
 
   if (!rows.length) {
-    tbody.innerHTML = '<tr class="empty-row"><td colspan="9">No proposals match this filter.</td></tr>';
-    return;
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="10">No proposals match this filter.</td></tr>';
+  } else {
+    tbody.innerHTML = rows.map((p) => `
+      <tr class="clickable" data-id="${p.companyId}">
+        <td>${p.companyName || '—'}</td>
+        <td>${p.bdm || '—'}</td>
+        <td>${p.title || '—'} <a href="${bullhornUrl('Opportunity', p.id)}" class="bh-link" title="Open in Bullhorn" onclick="event.stopPropagation()">&#8599;</a></td>
+        <td class="num">${fmtMoney(p.dealValue)}</td>
+        <td>${p.dealStage}</td>
+        <td class="num">${fmtDate(p.contractSentDate)}</td>
+        <td class="num">${fmtDate(p.lastActivity)}</td>
+        <td><span class="badge b-${p.bucket}">${bucketLabel(p.bucket)}</span></td>
+        <td class="num">${fmtDate(p.expectedCloseDate)}</td>
+        <td>${p.needsFollowUp ? '<span class="followup-badge">Follow up</span>' : ''}</td>
+      </tr>
+    `).join('');
+    tbody.querySelectorAll('tr.clickable').forEach((row) => {
+      row.addEventListener('click', () => openAccountModal(row.dataset.id));
+    });
   }
 
-  tbody.innerHTML = rows.map((p) => `
-    <tr class="clickable" data-id="${p.companyId}">
-      <td>${p.companyName || '—'}</td>
-      <td>${p.bdm || '—'}</td>
-      <td>${p.title || '—'} <a href="${bullhornUrl('Opportunity', p.id)}" class="bh-link" title="Open in Bullhorn" onclick="event.stopPropagation()">&#8599;</a></td>
-      <td class="num">${fmtMoney(p.dealValue)}</td>
-      <td>${p.dealStage}</td>
-      <td class="num">${fmtDate(p.contractSentDate)}</td>
-      <td class="num">${fmtDate(p.lastActivity)}</td>
-      <td class="num">${fmtDate(p.expectedCloseDate)}</td>
-      <td>${p.needsFollowUp ? '<span class="followup-badge">Follow up</span>' : ''}</td>
-    </tr>
-  `).join('');
-  tbody.querySelectorAll('tr.clickable').forEach((row) => {
-    row.addEventListener('click', () => openAccountModal(row.dataset.id));
-  });
+  renderProposalsPagination(totalPages);
 }
 
-document.getElementById('proposalsDateFrom').addEventListener('change', (e) => { proposalsState.dateFrom = e.target.value; renderProposals(); });
-document.getElementById('proposalsDateTo').addEventListener('change', (e) => { proposalsState.dateTo = e.target.value; renderProposals(); });
+function renderProposalsPagination(totalPages) {
+  const el = document.getElementById('proposalsPagination');
+  if (totalPages <= 1) { el.innerHTML = ''; return; }
+  el.innerHTML = `
+    <button id="proposalsPrevPage" ${proposalsState.page === 1 ? 'disabled' : ''}>&larr; Prev</button>
+    <span>Page ${proposalsState.page} of ${totalPages}</span>
+    <button id="proposalsNextPage" ${proposalsState.page === totalPages ? 'disabled' : ''}>Next &rarr;</button>
+  `;
+  document.getElementById('proposalsPrevPage')?.addEventListener('click', () => { proposalsState.page--; renderProposals(); });
+  document.getElementById('proposalsNextPage')?.addEventListener('click', () => { proposalsState.page++; renderProposals(); });
+}
+
+document.getElementById('proposalSearch').addEventListener('input', (e) => {
+  proposalsState.search = e.target.value;
+  proposalsState.page = 1;
+  renderProposals();
+});
+document.getElementById('proposalsDateFrom').addEventListener('change', (e) => { proposalsState.dateFrom = e.target.value; proposalsState.page = 1; renderProposals(); });
+document.getElementById('proposalsDateTo').addEventListener('change', (e) => { proposalsState.dateTo = e.target.value; proposalsState.page = 1; renderProposals(); });
 document.getElementById('proposalsDateClear').addEventListener('click', () => {
   proposalsState.dateFrom = ''; proposalsState.dateTo = '';
   document.getElementById('proposalsDateFrom').value = '';
   document.getElementById('proposalsDateTo').value = '';
+  renderProposals();
+});
+document.getElementById('proposalsActivityFrom').addEventListener('change', (e) => { proposalsState.activityFrom = e.target.value; proposalsState.page = 1; renderProposals(); });
+document.getElementById('proposalsActivityTo').addEventListener('change', (e) => { proposalsState.activityTo = e.target.value; proposalsState.page = 1; renderProposals(); });
+document.getElementById('proposalsActivityClear').addEventListener('click', () => {
+  proposalsState.activityFrom = ''; proposalsState.activityTo = '';
+  document.getElementById('proposalsActivityFrom').value = '';
+  document.getElementById('proposalsActivityTo').value = '';
   renderProposals();
 });
 
@@ -333,9 +395,9 @@ document.querySelectorAll('.tab-btn').forEach((btn) => {
   });
 });
 
-document.querySelectorAll('#tab-accounts .filter-row .chip').forEach((chip) => {
+document.querySelectorAll('#tab-accounts .filter-row .chip[data-bucket]').forEach((chip) => {
   chip.addEventListener('click', () => {
-    document.querySelectorAll('#tab-accounts .filter-row .chip').forEach((c) => c.classList.remove('active'));
+    chip.closest('.filter-row').querySelectorAll('.chip').forEach((c) => c.classList.remove('active'));
     chip.classList.add('active');
     accountsState.bucket = chip.dataset.bucket;
     accountsState.page = 1;
@@ -343,11 +405,22 @@ document.querySelectorAll('#tab-accounts .filter-row .chip').forEach((chip) => {
   });
 });
 
-document.querySelectorAll('#tab-proposals .chip').forEach((chip) => {
+document.querySelectorAll('#tab-proposals .chip[data-pbucket]').forEach((chip) => {
   chip.addEventListener('click', () => {
-    document.querySelectorAll('#tab-proposals .chip').forEach((c) => c.classList.remove('active'));
+    chip.closest('.filter-row').querySelectorAll('.chip').forEach((c) => c.classList.remove('active'));
+    chip.classList.add('active');
+    proposalsState.bucket = chip.dataset.pbucket;
+    proposalsState.page = 1;
+    renderProposals();
+  });
+});
+
+document.querySelectorAll('#tab-proposals .chip[data-follow]').forEach((chip) => {
+  chip.addEventListener('click', () => {
+    chip.closest('.filter-row').querySelectorAll('.chip').forEach((c) => c.classList.remove('active'));
     chip.classList.add('active');
     proposalsState.follow = chip.dataset.follow;
+    proposalsState.page = 1;
     renderProposals();
   });
 });

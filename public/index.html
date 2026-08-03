@@ -103,11 +103,29 @@
       activity (may be more recent than the sent date if there's been other movement on the account).
     </p>
     <div class="search-row">
+      <input id="proposalSearch" type="search" placeholder="Search company name…" />
+      <div class="date-filter">
+        <label>Last activity from <input type="date" id="proposalsActivityFrom" /></label>
+        <label>to <input type="date" id="proposalsActivityTo" /></label>
+        <button id="proposalsActivityClear" class="link-btn">Clear</button>
+      </div>
+    </div>
+    <div class="search-row">
       <div class="date-filter">
         <label>Sent from <input type="date" id="proposalsDateFrom" /></label>
         <label>to <input type="date" id="proposalsDateTo" /></label>
         <button id="proposalsDateClear" class="link-btn">Clear</button>
       </div>
+    </div>
+    <div class="az-strip" id="proposalsAzStrip"></div>
+    <div class="filter-row">
+      <span class="muted">Activity:</span>
+      <button class="chip active" data-pbucket="all">All</button>
+      <button class="chip" data-pbucket="0-30">0–30 days</button>
+      <button class="chip" data-pbucket="31-60">31–60 days</button>
+      <button class="chip" data-pbucket="61-90">61–90 days</button>
+      <button class="chip" data-pbucket="91+">91+ days</button>
+      <button class="chip" data-pbucket="no-activity">No activity</button>
     </div>
     <div class="filter-row">
       <span class="muted">Follow-up:</span>
@@ -138,6 +156,7 @@
             <th>Stage</th>
             <th>Contract/Proposal Sent</th>
             <th>Last Activity</th>
+            <th>Bucket</th>
             <th>Expected Close</th>
             <th></th>
           </tr>
@@ -145,6 +164,7 @@
         <tbody></tbody>
       </table>
     </div>
+    <div class="pagination" id="proposalsPagination"></div>
   </section>
 </div>
 
